@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ProjectAxis | Secure Password Reset</title>
+    <!-- Google Fonts & Phosphor Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Firebase v9 modular SDK -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0B1121 0%, #1e2a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        /* Main card container */
+        .reset-card {
+            max-width: 500px;
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+            animation: fadeSlideUp 0.5s ease-out;
+        }
+
+        /* Header with brand accent */
+        .card-header {
+            background: #0F172A;
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid #2563EB;
+        }
+
+        .brand-icon {
+            background: rgba(37, 99, 235, 0.15);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .brand-icon i {
+            font-size: 2.4rem;
+            color: #3B82F6;
+        }
+
+        .card-header h2 {
+            color: white;
+            font-weight: 800;
+            font-size: 1.7rem;
+            letter-spacing: -0.3px;
+        }
+
+        .card-header p {
+            color: #94A3B8;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Form body */
+        .card-body {
+            padding: 2rem 2rem 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group label i {
+            color: #2563EB;
+            font-size: 1.2rem;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 48px 14px 18px;
+            border-radius: 14px;
+            border: 2px solid #E2E8F0;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: 'Plus Jakarta Sans', monospace;
+            background: #F8FAFC;
+            transition: all 0.2s;
+        }
+
+        .password-wrapper input:focus {
+            outline: none;
+            border-color: #2563EB;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: #64748B;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: #2563EB;
+        }
+
+        .error-message {
+            color: #EF4444;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .error-message i {
+            font-size: 1rem;
+        }
+
+        .btn-reset {
+            width: 100%;
+            background: #2563EB;
+            color: white;
+            font-weight: 700;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 0.5rem;
+            box-shadow: 0 8px 16px -6px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-reset:hover {
+            background: #1D4ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -8px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-reset:active {
+            transform: translateY(1px);
+        }
+
+        /* Success popup / modal */
+        .success-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 17, 33, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+
+        .success-popup.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .popup-card {
+            background: white;
+            max-width: 380px;
+            width: 90%;
+            padding: 2rem;
+            border-radius: 2rem;
+            text-align: center;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.2);
+            animation: fadeScale 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .popup-card i {
+            font-size: 3.5rem;
+            color: #10B981;
+            margin-bottom: 1rem;
+        }
+
+        .popup-card h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-card p {
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-return {
+            background: #2563EB;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-return:hover {
+            background: #1D4ED8;
+            transform: translateY(-2px);
+        }
+
+        /* Loading state */
+        .btn-reset.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive touches */
+        @media (max-width: 480px) {
+            .card-body {
+                padding: 1.5rem;
+            }
+            .card-header {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="reset-card">
+    <div class="card-header">
+        <div class="brand-icon">
+            <i class="ph ph-lock-key"></i>
+        </div>
+        <h2>Reset Password</h2>
+        <p>Create a strong new password for your account</p>
+    </div>
+    <div class="card-body">
+        <form id="resetPasswordForm">
+            <!-- New Password Field -->
+            <div class="input-group">
+                <label><i class="ph ph-key"></i> New Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" placeholder="Minimum 8 characters, 1 uppercase & 1 number" autocomplete="new-password">
+                    <button type="button" class="toggle-password" data-target="newPassword">
+                        <i class="ph ph-eye-slash"></i>
+                    </button>
+                </div>
+                <div id="newPasswordError" class="error-message" style="display: none;">
+                    <i class="ph ph-warning-circle"></i> <span></span>
+                </div>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="input-group">
+                <label><i class="ph ph-check-circle"></i> Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="Re-enter new password" autocomplete="off">
+                    <button type="button" class="toggle-password" data-target="confirmPassword">
+                        <i class="ph ph-eye-slash"></i>
+                    </button>
+                </div>
+                <div id="confirmError" class="error-message" style="display: none;">
+                    <i class="ph ph-warning-circle"></i> <span></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-reset" id="submitResetBtn">
+                <i class="ph ph-arrow-circle-right"></i> Update Secure Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Success Popup (hidden by default) -->
+<div id="successPopup" class="success-popup">
+    <div class="popup-card">
+        <i class="ph ph-check-circle"></i>
+        <h3>Password Updated!</h3>
+        <p>Your password has been successfully reset.<br>You can now log in with your new credentials.</p>
+        <button class="btn-return" id="returnToLoginBtn">
+            <i class="ph ph-sign-in"></i> Return to Login
+        </button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "firebase/app";
+    import { getAuth, confirmPasswordReset } from "firebase/auth";
+
+    // Firebase configuration (same as your ProjectAxis project)
+    const firebaseConfig = {
+        apiKey: "AIzaSyBZn7Lcd-LqQxxEAEJcGV0J3brlDo5wKhc",
+        authDomain: "projectaxis-by-subeesh.firebaseapp.com",
+        projectId: "projectaxis-by-subeesh",
+        storageBucket: "projectaxis-by-subeesh.firebasestorage.app",
+        messagingSenderId: "921761667803",
+        appId: "1:921761667803:web:a8b124df5375ea62954afe"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // DOM elements
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const newPasswordErrorDiv = document.getElementById('newPasswordError');
+    const confirmErrorDiv = document.getElementById('confirmError');
+    const resetForm = document.getElementById('resetPasswordForm');
+    const submitBtn = document.getElementById('submitResetBtn');
+    const successPopup = document.getElementById('successPopup');
+
+    // Helper: show inline error
+    function showError(element, message) {
+        const errorSpan = element.querySelector('span');
+        errorSpan.textContent = message;
+        element.style.display = 'flex';
+    }
+    function clearError(element) {
+        element.style.display = 'none';
+        const errorSpan = element.querySelector('span');
+        if (errorSpan) errorSpan.textContent = '';
+    }
+
+    // Password validation: min 8 chars, at least one uppercase, one number
+    function isPasswordStrong(password) {
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const isLongEnough = password.length >= 8;
+        return hasUpperCase && hasNumber && isLongEnough;
+    }
+
+    // Real-time validation & match check
+    function validatePasswords() {
+        let isValid = true;
+        const newPwd = newPasswordInput.value;
+        const confirmPwd = confirmPasswordInput.value;
+
+        // Clear previous errors
+        clearError(newPasswordErrorDiv);
+        clearError(confirmErrorDiv);
+
+        // Validate new password strength
+        if (newPwd === "") {
+            showError(newPasswordErrorDiv, "Password is required.");
+            isValid = false;
+        } else if (!isPasswordStrong(newPwd)) {
+            showError(newPasswordErrorDiv, "Must be at least 8 characters, contain 1 uppercase letter and 1 number.");
+            isValid = false;
+        }
+
+        // Confirm password match
+        if (confirmPwd === "") {
+            showError(confirmErrorDiv, "Please confirm your password.");
+            isValid = false;
+        } else if (newPwd !== confirmPwd) {
+            showError(confirmErrorDiv, "Passwords do not match.");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // Add live validation (blur / input)
+    newPasswordInput.addEventListener('input', () => validatePasswords());
+    confirmPasswordInput.addEventListener('input', () => validatePasswords());
+
+    // Password toggle functionality (for both fields)
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('ph-eye-slash');
+                icon.classList.add('ph-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('ph-eye');
+                icon.classList.add('ph-eye-slash');
+            }
+        });
+    });
+
+    // Extract oobCode from URL parameters (Firebase provides 'mode' and 'oobCode')
+    const urlParams = new URLSearchParams(window.location.search);
+    const oobCode = urlParams.get('oobCode');
+
+    if (!oobCode) {
+        // Invalid or missing reset link: show error inside form
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.style.marginBottom = '1rem';
+        errorContainer.style.justifyContent = 'center';
+        errorContainer.style.padding = '12px';
+        errorContainer.style.background = 'rgba(239,68,68,0.1)';
+        errorContainer.style.borderRadius = '12px';
+        errorContainer.innerHTML = '<i class="ph ph-warning-circle"></i> Invalid or expired reset link. Please request a new password reset.';
+        resetForm.prepend(errorContainer);
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+    }
+
+    // Handle form submission
+    resetForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Re-validate before submitting
+        if (!validatePasswords()) return;
+
+        if (!oobCode) {
+            alert("Reset link is missing or invalid. Please request a new password reset email.");
+            return;
+        }
+
+        const newPassword = newPasswordInput.value;
+
+        // Disable button & show loading state
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        const originalBtnHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Updating...';
+
+        try {
+            // Firebase confirmPasswordReset
+            await confirmPasswordReset(auth, oobCode, newPassword);
+            
+            // Success: show popup
+            successPopup.classList.add('active');
+
+            // Clear sensitive fields after success
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+            validatePasswords(); // clear errors
+        } catch (error) {
+            console.error("Password reset error:", error);
+            let errorMessage = "Something went wrong. ";
+            switch (error.code) {
+                case 'auth/expired-action-code':
+                    errorMessage = "This reset link has expired. Please request a new password reset.";
+                    break;
+                case 'auth/invalid-action-code':
+                    errorMessage = "Invalid reset link. Please check your email and try again.";
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = "Password is too weak. Please choose a stronger password (min 8 chars, uppercase & number).";
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = "This account has been disabled. Contact support.";
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            // Display error as a temporary toast or inline
+            const errorToast = document.createElement('div');
+            errorToast.style.position = 'fixed';
+            errorToast.style.bottom = '20px';
+            errorToast.style.left = '50%';
+            errorToast.style.transform = 'translateX(-50%)';
+            errorToast.style.backgroundColor = '#EF4444';
+            errorToast.style.color = 'white';
+            errorToast.style.padding = '12px 24px';
+            errorToast.style.borderRadius = '40px';
+            errorToast.style.fontWeight = '600';
+            errorToast.style.zIndex = '1100';
+            errorToast.style.display = 'flex';
+            errorToast.style.alignItems = 'center';
+            errorToast.style.gap = '10px';
+            errorToast.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
+            errorToast.innerHTML = `<i class="ph ph-warning"></i> ${errorMessage}`;
+            document.body.appendChild(errorToast);
+            setTimeout(() => errorToast.remove(), 5000);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.innerHTML = originalBtnHTML;
+        }
+    });
+
+    // "Return to Login" button behaviour
+    document.getElementById('returnToLoginBtn').addEventListener('click', () => {
+        // Redirect to your login page (admin portal or customer login)
+        // Adjust the URL to match your application's login route
+        window.location.href = '/login.html';   // Change if needed (e.g., admin/index.html)
+        // For flexibility, fallback to project root if needed:
+        // window.location.href = '/';
+    });
+
+    // Optional: if user clicks outside popup, keep it (but we want them to click the button)
+    // also close popup on background click? We'll keep it strict: only button closes.
+    // Ensure popup close on button only for better UX.
+    successPopup.addEventListener('click', (e) => {
+        if (e.target === successPopup) {
+            // optionally do nothing to avoid accidental close, but we can redirect anyway.
+            // we redirect to login by default:
+            window.location.href = '/login.html';
+        }
+    });
+</script>
+</body>
+</html>
